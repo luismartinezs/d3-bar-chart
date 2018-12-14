@@ -6,163 +6,147 @@ req = new XMLHttpRequest();
 req.open("GET", url, true);
 req.onload = () => {
   json = JSON.parse(req.responseText);
-  console.log(json.data.filter((e, i) => i < 10));
+  // console.log(json.data.filter((e, i) => i < 10));
   loadChart(json.data);
+  console.log(json);
 };
 req.send();
 
 
-
-// select svg element
-const w = 800;
-const h = 500;
-const padding = 100;
-const svg = d3.select("svg");
-svg.attr("width", w).attr("height", h);
-
-
-
-// add title to svg
-svg
-  .append("text")
-  .attr("x", w / 2)
-  .attr("y", 0 + padding / 2)
-  .attr("text-anchor", "middle")
-  .attr("id", "title")
-  .style("font-size", "2rem")
-  .style("text-decoration", "none")
-  .style("font-family", "Roboto")
-  .text("United States GDP");
-
-const scale = d3.scaleLinear();
-
-
-
-function loadChart(arr) {
+function loadChart(data) {
+  // let dateStr = data[0][0];
+  // let date = new Date(dateStr); // gives a date
   // TODO: format the years like so: 1950, without the comma for thousandstoString(0)
 
-  arr = [];
-  for (let i = 0; i < 10; i++) {
-    arr.push([i, i*10]);
-  }
+  // data = [];
+  // for (let i = 0; i < 10; i++) {
+  //   data.push([i * 10, i * 10]);
+  // }
 
-  // Create axis
-  // define domain
-  const xDomMin = d3.min(arr, d => d[0]);
-  const xDomMax = d3.max(arr, d => d[0]);
-  const xDomain = [xDomMin, xDomMax];
+  const w = 800;
+  const h = 500;
+  // margin is the space between the border of the svg element and the chart
+  const margin = {
+    top: 70,
+    bottom: 50,
+    left: 70,
+    right: 50
+  };
+  const chartW = w - margin.left - margin.right;
+  const chartH = h - margin.top - margin.bottom;
 
-  const yDomMin = d3.min(arr, d => d[1]);;
-  const yDomMax = d3.max(arr, d => d[1]);
-  const yDomain = [yDomMin, yDomMax];
+  const svg = d3.select("svg");
+  svg.attr("width", w).attr("height", h);
 
-  // define range
-  const xRange = [padding, w - padding];
-  const yRange = [h - padding, padding];
-
-  console.log(`xDomain: ${xDomain}
-yDomain: ${yDomain}
-xRange: ${xRange}
-yRange: ${yRange}`);
-
-  const xScale = d3.scaleLinear();
-  xScale.domain(xDomain).nice().range(xRange);
-
-  const yScale = d3.scaleLinear();
-  yScale.domain(yDomain).nice().range(yRange);
-
-  const xAxis = d3.axisBottom(xScale);
-  const yAxis = d3.axisLeft(yScale);
-
-  // set axes in svg
-  svg
+  const chart = svg
     .append("g")
-    .attr("transform", `translate(0,${h - padding})`)
-    .call(xAxis);
+    .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-  svg
+  // create a scaling function for the y axis
+  const yScale = d3
+    .scaleLinear()
+    .range([chartH, 0])
+    .domain([0, d3.max(data, d => d[1])]);
+  // for range, the y coordinate starts from top left corner, so the first parameter is the height, not 0
+
+  // create Y axis
+  chart.append("g").call(d3.axisLeft(yScale));
+
+  // create scaling function for x axis
+  const xScale = d3
+    .scaleTime()
+    .range([0, chartW])
+    .domain([d3.min(data, d => new Date(d[0])), d3.max(data, d => new Date(d[0]))]);
+
+  console.dir(xScale);
+
+  // create X axis
+  chart
     .append("g")
-    .attr("transform", `translate(${padding},0)`)
-    .call(yAxis);
+    .attr("transform", `translate(0, ${chartH})`)
+    .call(d3.axisBottom(xScale));
 
-  // append rectangles representing the datase to svg
-  svg
-    .selectAll("rect")
-    .data(arr)
+  /*
+Other types of scales are possible:
+- scaleBand: to split the range into bands and compute coordinates and widths of the bands with additional padding
+- scaleTime: when domain is an array of dates
+*/
+
+const barStyle = {
+  color: '#29a6ce',
+  colorHover: 'white',
+}
+
+  // Add bars (rectangles)
+  chart
+    .selectAll()
+    .data(data)
     .enter()
     .append("rect")
-    .attr("x", d => xScale(d[0]) )
-    .attr("y", (d, i) => h - padding - yScale(d[1]) - i*( h - 2*padding ) / ( arr.length - 1 ) )
-    .attr("width", ( w - 2*padding ) / ( arr.length - 1 ) )
-    .attr("height", (d, i) => yScale(d[1]) - i )
-    .attr("fill", "rgb(51, 173, 255)");
-    // setting up the Y values is giving me a headache
+    .attr('class', 'bar')
+    .attr('data-date', d => d[0])
+    .attr('data-gdp', d => d[1])
+    .attr("x", d => xScale(new Date(d[0])))
+    .attr("y", d => yScale(d[1]))
+    .attr("height", d => chartH - yScale(d[1]))
+    .attr("width", 3)
+    .attr("fill", barStyle.color)
+    .on('mouseover', function() {
+      d3.select(this)
+      .attr('fill', barStyle.colorHover)
+    })
+    .on('mouseout', function() {
+      d3.select(this)
+      .attr('fill', barStyle.color)
+    });
+
+  // .attr(’x’, (actual, index, array) => xScale(actual.value))
+  // array is the while array of data
+
+    // Add horizontal tick marks
+    // chart
+    // .append("g")
+    // .attr("class", "grid")
+    // .call(
+    //   d3
+    //     .axisLeft()
+    //     .scale(yScale)
+    //     .tickSize(-chartW, 0, 0)
+    //     .tickFormat("")
+    // );
+
+  // Add vertical tick marks
+  // chart
+  //   .append("g")
+  //   .attr("class", "grid")
+  //   .attr("transform", `translate(0, ${chartH})`)
+  //   .call(
+  //     d3
+  //       .axisBottom()
+  //       .scale(xScale)
+  //       .tickSize(-chartH, 0, 0)
+  //       .tickFormat("")
+  //   );
+
+  // Add title Y
+  // svg
+  //   .append("text")
+  //   .attr("x", -(chartH / 2) - margin.left)
+  //   .attr("y", margin.top / 2.4)
+  //   .attr("transform", "rotate(-90)")
+  //   .attr("text-anchor", "middle")
+  //   .text("Chart title Y");
+
+  // Add title X
+  svg
+    .append("text")
+    .attr("x", chartW / 1.7)
+    .attr("y", margin.top / 1.5)
+    .attr("text-anchor", "middle")
+    .style('font-size', '24px')
+    .style('font-family', 'Roboto')
+    .text("United States GDP");
+
+
+
 }
-
-
-
-/*
-@ param {string} date is a string in the format "yyyy-mm-dd"
-@ returns the year in decimal format
-*/
-function date2Num(date) {
-  let dateArr = date.split("-");
-  return (+dateArr[0] + +dateArr[1] / 12 + +dateArr[2] / 365).toFixed(2);
-}
-
-
-function loadChartOld(arr) {
-    // TODO: format the years like so: 1950, without the comma for thousandstoString(0)
-    let yearFormat = d3.format(".0f");
-  
-    // Create axis
-    // define domain
-    const xDomMin = d3.min(arr, d => date2Num(d[0]));
-    const xDomMax = d3.max(arr, d => date2Num(d[0]));
-    const xDomain = [xDomMin, xDomMax];
-  
-    const yDomMin = 0;
-    const yDomMax = d3.max(arr, d => d[1]);
-    const yDomain = [yDomMax, yDomMin];
-  
-    // define range
-    const xRange = [padding, w - padding];
-    const yRange = [padding, h - padding];
-  
-    console.log(`    xDomain: ${xDomain}
-      yDomain: ${yDomain}
-      xRange: ${xRange}
-      yRange: ${yRange}`);
-  
-    const xScale = d3.scaleLinear();
-    xScale.domain(xDomain).range(xRange);
-  
-    const yScale = d3.scaleLinear();
-    yScale.domain(yDomain).range(yRange);
-  
-    const xAxis = d3.axisBottom(xScale);
-    const yAxis = d3.axisLeft(yScale);
-  
-    // set axes in svg
-    svg
-      .append("g")
-      .attr("transform", `translate(0,${h - padding})`)
-      .call(xAxis);
-  
-    svg
-      .append("g")
-      .attr("transform", `translate(${padding},0)`)
-      .call(yAxis);
-  
-    // append rectangles representing the datase to svg
-    svg
-      .selectAll("rect")
-      .data(arr)
-      .enter()
-      .append("rect")
-      .attr("x", d => xScale(date2Num(d[0])))
-      .attr("y", d => h - padding - yScale(d[1]))
-      .attr("width", xRange[1] / arr.length - 1)
-      .attr("height", d => yScale(d[1]))
-      .attr("fill", "rgb(51, 173, 255)");
-  }
