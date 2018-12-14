@@ -11,12 +11,16 @@ req.onload = () => {
 };
 req.send();
 
+
+
 // select svg element
 const w = 800;
 const h = 500;
 const padding = 100;
 const svg = d3.select("svg");
 svg.attr("width", w).attr("height", h);
+
+
 
 // add title to svg
 svg
@@ -31,6 +35,8 @@ svg
   .text("United States GDP");
 
 const scale = d3.scaleLinear();
+
+
 
 function loadChart(arr) {
   // TODO: format the years like so: 1950, without the comma for thousandstoString(0)
@@ -60,10 +66,10 @@ xRange: ${xRange}
 yRange: ${yRange}`);
 
   const xScale = d3.scaleLinear();
-  xScale.domain(xDomain).range(xRange);
+  xScale.domain(xDomain).nice().range(xRange);
 
   const yScale = d3.scaleLinear();
-  yScale.domain(yDomain).range(yRange);
+  yScale.domain(yDomain).nice().range(yRange);
 
   const xAxis = d3.axisBottom(xScale);
   const yAxis = d3.axisLeft(yScale);
@@ -93,10 +99,11 @@ yRange: ${yRange}`);
     // setting up the Y values is giving me a headache
 }
 
+
+
 /*
 @ param {string} date is a string in the format "yyyy-mm-dd"
-
-returns the year in decimal format
+@ returns the year in decimal format
 */
 function date2Num(date) {
   let dateArr = date.split("-");
