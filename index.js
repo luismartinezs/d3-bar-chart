@@ -1,4 +1,5 @@
 // Call API
+let req, json;
 const url =
   "https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/GDP-data.json";
 
@@ -6,22 +7,11 @@ req = new XMLHttpRequest();
 req.open("GET", url, true);
 req.onload = () => {
   json = JSON.parse(req.responseText);
-  // console.log(json.data.filter((e, i) => i < 10));
   loadChart(json.data);
-  console.log(json);
 };
 req.send();
 
 function loadChart(data) {
-  // let dateStr = data[0][0];
-  // let date = new Date(dateStr); // gives a date
-  // TODO: format the years like so: 1950, without the comma for thousandstoString(0)
-
-  // data = [];
-  // for (let i = 0; i < 10; i++) {
-  //   data.push([i * 10, i * 10]);
-  // }
-
   const w = 800;
   const h = 500;
   // margin is the space between the border of the svg element and the chart
@@ -50,7 +40,7 @@ function loadChart(data) {
   // for range, the y coordinate starts from top left corner, so the first parameter is the height, not 0
 
   // create Y axis
-  chart.append("g").call(d3.axisLeft(yScale));
+  chart.append("g").attr('id', 'y-axis').call(d3.axisLeft(yScale));
 
   // create scaling function for x axis
   const xScale = d3
@@ -61,16 +51,16 @@ function loadChart(data) {
       d3.max(data, d => new Date(d[0]))
     ]);
 
-  console.dir(xScale);
-
   // create X axis
   chart
     .append("g")
+    .attr('id', 'x-axis')
     .attr("transform", `translate(0, ${chartH})`)
     .call(d3.axisBottom(xScale));
 
   /*
-Other types of scales are possible:
+Common types of scales:
+* scaleLinear
 - scaleBand: to split the range into bands and compute coordinates and widths of the bands with additional padding
 - scaleTime: when domain is an array of dates
 */
@@ -112,14 +102,13 @@ Other types of scales are possible:
     .attr("fill", barStyle.color)
     .attr("width", 3)
     .on("mouseover", function(d) {
-      console.log(event);
       d3.select(this).attr("fill", barStyle.colorHover);
       tooltip
         .style("opacity", 0.8)
         .html(
           `${d[0].split("-")[0]} Q${Math.ceil(
             d[0].split("-")[1] / 3
-          )}<br/>\$${d[1].toFixed(1)} Billion`
+          )}<br/>$${d[1].toFixed(1)} Billion`
         )
         .style("left", function() {
           if (
@@ -128,7 +117,9 @@ Other types of scales are possible:
           ) {
             return `${event.clientX + tooltipStyle.margin.left}px`;
           } else {
-            return `${event.clientX - tooltipStyle.margin.left - tooltipStyle.width}px`;
+            return `${event.clientX -
+              tooltipStyle.margin.left -
+              tooltipStyle.width}px`;
           }
         })
         .attr("data-date", this.dataset.date);
@@ -166,7 +157,7 @@ Other types of scales are possible:
   //       .tickFormat("")
   //   );
 
-  // Add title Y
+  // Add title Y axis
   svg
     .append("text")
     .attr("x", -(chartH / 2) - margin.left)
@@ -182,6 +173,7 @@ Other types of scales are possible:
     .attr("x", chartW / 1.7)
     .attr("y", margin.top / 1.5)
     .attr("text-anchor", "middle")
+    .attr('id', 'title')
     .style("font-size", "24px")
     .style("font-family", "Roboto")
     .text("United States GDP");
