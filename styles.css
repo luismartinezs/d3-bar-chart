@@ -7,7 +7,7 @@ body {
     height: 100vh;
     width: 100vw;
     background-image: radial-gradient(var(--bg-color-1) 20%, var(--bg-color-2) 100%);
-    color: black;
+    color: rgb(51, 46, 46);
 }
 
 .svgWrapper {
@@ -22,7 +22,33 @@ body {
 } */
 
 svg {
-    background-color: white;
+    background-image: url(./images/texture001.jpg);
+    background-repeat: repeat;
     box-shadow: 2px 2px 30px 5px rgba(0,0,0,0.3);
     text-align: center;
+}
+
+.tooltip {	
+    position: absolute;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;			
+    height: 60px;					
+    padding: 2px;				
+    font: 16px 'Roboto';		
+    background: rgb(222, 206, 176);	
+    border: 0px;		
+    border-radius: 3px;			
+    pointer-events: none;
+    box-shadow: 0 0 5px 1px rgba(0,0,0,0.3);			
+}
+
+.yTitle {
+    font: 16px 'Roboto';
+}
+
+.rotate {
+    transform: rotate(-90deg);
 }
